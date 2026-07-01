@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Artist Name</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+    <a class="back-link" href="index.html">← Back to log</a>
+
+    <div class="detail-header">
+        <h1>Artist</h1>
+        <p class="sub">Venue · City, State · year-mo-dy · openers</p>
+    </div>
+
+    <!-- Saved content -->
+    <div id="setlist-display" style="display:none" class="detail-block">
+        <h3 class="section-label">Setlist</h3>
+        <a id="setlist-link" href="#" target="_blank" class="setlist-btn">View on setlist.fm ↗</a>
+    </div>
+
+    <div class="detail-block">
+        <div id="photo-grid"></div>
+    </div>
+
+    <div id="notes-display" style="display:none" class="detail-block">
+        <h3 class="section-label">Notes</h3>
+        <p id="notes-text"></p>
+    </div>
+
+    <!-- Edit collapsible -->
+    <details class="edit-section">
+        <summary>Edit this page</summary>
+        <div class="edit-fields">
+            <div class="modal-section">
+                <h3 class="section-label">Setlist.fm link</h3>
+                <input id="input-setlist" placeholder="https://www.setlist.fm/...">
+            </div>
+            <div class="modal-section">
+                <h3 class="section-label">Upload photos</h3>
+                <p class="modal-hint">Select one or more images from your computer. They'll be saved in your browser.</p>
+                <input type="file" id="input-photos" accept="image/*" multiple>
+                <div id="existing-photos-info"></div>
+            </div>
+            <div class="modal-section">
+                <h3 class="section-label">Notes</h3>
+                <textarea id="input-notes" rows="3" placeholder="How was it? Anything memorable?"></textarea>
+            </div>
+            <div class="edit-actions">
+                <button class="save-btn" onclick="saveAll()">Save changes</button>
+                <button class="delete-btn" onclick="clearPhotos()">Clear all photos</button>
+            </div>
+            <p id="save-msg" style="display:none;color:#6bcf8f;font-size:0.85rem;margin-top:8px;">Saved!</p>
+        </div>
+    </details>
+
+</div>
+<script>
+    const STORE = "metallica-2022-08-14";
+
+    function sk(type) { return STORE + "::" + type; }
+
+    function loadSaved() {
+        const setlist = localStorage.getItem(sk("setlist")) || "";
+        const notes   = localStorage.getItem(sk("notes")) || "";
+        const count   = parseInt(localStorage.getItem(sk("photo-count")) || "0", 10);
+        const photos  = [];
+        for (var i = 0; i < count; i++) {
+            var d = localStorage.getItem(sk("photo-" + i));
+            if (d) photos.push(d);
+        }
+        return { setlist, notes, photos };
+    }
+
+    function renderSaved() {
+        var saved = loadSaved();
+
+        if (saved.setlist) {
+            document.getElementById("setlist-display").style.display = "block";
+            document.getElementById("setlist-link").href = saved.setlist;
+            document.getElementById("input-setlist").value = saved.setlist;
+        } else {
+            document.getElementById("setlist-display").style.display = "none";
+        }
+
+        var grid = document.getElementById("photo-grid");
+        if (saved.photos.length > 0) {
+            grid.innerHTML = saved.photos.map(function(src) {
+                return '<img src="' + src + '" alt="Concert photo">';
+            }).join("");
+        } else {
+            grid.innerHTML = "";
+        }
+
+        if (saved.notes) {
+            document.getElementById("notes-display").style.display = "block";
+            document.getElementById("notes-text").textContent = saved.notes;
+            document.getElementById("input-notes").value = saved.notes;
+        } else {
+            document.getElementById("notes-display").style.display = "none";
+            document.getElementById("input-notes").value = "";
+        }
+
+        var info = document.getElementById("existing-photos-info");
+        info.textContent = saved.photos.length > 0 ? saved.photos.length + " photo(s) saved. Upload more to add to them." : "";
+    }
+
+    function saveAll() {
+        var setlist = document.getElementById("input-setlist").value.trim();
+        var notes   = document.getElementById("input-notes").value.trim();
+        var fileInput = document.getElementById("input-photos");
+
+        localStorage.setItem(sk("setlist"), setlist);
+        localStorage.setItem(sk("notes"), notes);
+
+        if (fileInput.files.length > 0) {
+            var existingCount = parseInt(localStorage.getItem(sk("photo-count")) || "0", 10);
+            var startIndex = existingCount;
+            var loaded = 0;
+            var total = fileInput.files.length;
+            Array.from(fileInput.files).forEach(function(file, i) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    localStorage.setItem(sk("photo-" + (startIndex + i)), e.target.result);
+                    loaded++;
+                    if (loaded === total) {
+                        localStorage.setItem(sk("photo-count"), startIndex + total);
+                        fileInput.value = "";
+                        showMsg();
+                        renderSaved();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            showMsg();
+            renderSaved();
+        }
+    }
+
+    function clearPhotos() {
+        if (!confirm("Remove all saved photos for this concert?")) return;
+        var count = parseInt(localStorage.getItem(sk("photo-count")) || "0", 10);
+        for (var i = 0; i < count; i++) localStorage.removeItem(sk("photo-" + i));
+        localStorage.setItem(sk("photo-count"), "0");
+        renderSaved();
+    }
+
+    function showMsg() {
+        var msg = document.getElementById("save-msg");
+        msg.style.display = "block";
+        setTimeout(function(){ msg.style.display = "none"; }, 2000);
+    }
+
+    renderSaved();
+</script>
+</body>
+</html>
