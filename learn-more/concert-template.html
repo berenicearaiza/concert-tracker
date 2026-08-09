@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Artist Name</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 <div class="wrap">
 
-    <a class="back-link" href="index.html">← Back to log</a>
+    <a class="back-link" href="../index.html">← Back to log</a>
 
     <div class="detail-header">
         <h1>Artist</h1>
@@ -62,17 +62,6 @@
 
     function sk(type) { return STORE + "::" + type; }
 
-    function loadSaved() {
-        const setlist = localStorage.getItem(sk("setlist")) || "";
-        const notes   = localStorage.getItem(sk("notes")) || "";
-        const count   = parseInt(localStorage.getItem(sk("photo-count")) || "0", 10);
-        const photos  = [];
-        for (var i = 0; i < count; i++) {
-            var d = localStorage.getItem(sk("photo-" + i));
-            if (d) photos.push(d);
-        }
-        return { setlist, notes, photos };
-    }
 
     function renderSaved() {
         var saved = loadSaved();
